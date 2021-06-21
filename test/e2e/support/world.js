@@ -149,7 +149,7 @@ module.exports = (config) => {
 
   async runForegroundProcess (args) {
     return new Promise((resolve) => {
-      exec(`${this.karmaExecutable} ${args}`, { cwd: this.workDir }, (error, stdout, stderr) => {
+      exec(`${this.karmaExecutable} ${args}`, { cwd: this.workDir, env: { ...process.env, ...this.env } }, (error, stdout, stderr) => {
         this.lastRun.error = error
         this.lastRun.stdout = stdout.toString()
         this.lastRun.stderr = stderr.toString()

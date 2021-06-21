@@ -17,6 +17,13 @@ Given('a proxy on port {int} that prepends {string} to the base path', async fun
   return this.proxy.start(proxyPort, proxyPath)
 })
 
+Given('the environment:', function (env) {
+  this.env = {}
+  for (const [key, value] of env.rawTable) {
+    this.env[key] = value
+  }
+})
+
 When('I stop a server programmatically', function (callback) {
   setTimeout(() => {
     stopper.stop(this.config, (exitCode) => {
@@ -148,4 +155,23 @@ Then(/^the file at ([a-zA-Z0-9/\\_.]+) contains:$/, function (filePath, expected
   if (!data.match(expectedOutput)) {
     throw new Error('Expected output to match the following:\n  ' + expectedOutput + '\nGot:\n  ' + data)
   }
+})
+
+Then('the stderr contains in order socket.io logs', function (callback) {
+  const regex = /emitting event (.*)/g
+  const found = Array.from(this.lastRun.stderr.matchAll(regex))
+  const events = []
+  // eslint-disable-next-line no-unused-vars
+  for (const [_, group] of found) {
+    events.push(JSON.parse(group))
+  }
+  const eventSequence = ['register', 'start', 'result', 'complete']
+  for (let i = 0; i < eventSequence.length; i++) {
+    const expectedEvent = eventSequence[i]
+    const actualEvent = events[i][0]
+    if (actualEvent !== expectedEvent) {
+      throw new Error(`Expected event '${expectedEvent}' at position ${i}, but got '${actualEvent}' instead`)
+    }
+  }
+  callback()
 })
